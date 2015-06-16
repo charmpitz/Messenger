@@ -4,9 +4,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 public class Listener extends Thread {
+    int id;
     DataInputStream dis;
     DataOutputStream dos;
-    int id;
 
     public Listener(int id, DataInputStream dis, DataOutputStream dos) {
         this.id = id;
@@ -34,6 +34,9 @@ public class Listener extends Thread {
                 dos.writeUTF("#1");
                 Thread.sleep(100);
             }
+
+            dis.close();
+            dos.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e.getMessage());

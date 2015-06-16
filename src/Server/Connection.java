@@ -39,6 +39,11 @@ public class Connection extends Thread {
                 Thread.sleep(100);
             }
 
+            is.close();
+            dis.close();
+            os.close();
+            dos.close();
+            cs.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e.getMessage());
