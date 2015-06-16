@@ -40,6 +40,8 @@ class Server {
     }
 
     public static void addMessageToClientQueue(int id, Message message) {
-        clientsMessages.get(id).add(message);
+        synchronized (clientsMessages.get(id)) {
+            clientsMessages.get(id).add(message);
+        }
     }
 }
