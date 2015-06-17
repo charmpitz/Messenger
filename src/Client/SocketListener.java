@@ -1,6 +1,8 @@
 package Client;
 
-import com.intellij.openapi.vcs.FilePath;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import org.apache.commons.codec.binary.Base64;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -14,34 +16,44 @@ public class SocketListener extends Thread {
         System.out.println("SocketListener started.");
         try {
             while( Client.isActive() ) {
-                // Check if we received something
-                String message = Client.dis.readUTF();
 
-                if (message.contentEquals("#0")) {
-                    Client.close();
-                    break;
-                } else {
-                    if (message.contentEquals("#text")) {
+                // Check if we received something
+                if (Client.dis.available() != 0) {
+
+                    String jsonString = Client.dis.readUTF();
+                    JsonObject jsonObject = (new Gson()).fromJson(jsonString, JsonObject.class);
+
+                    String type = jsonObject.get("type").getAsString();
+                    int from = jsonObject.get("from").getAsInt();
+                    //String to = jsonObject.get("to").getAsString();
+                    String text = jsonObject.get("text").getAsString();
+                    String data = null;
+
+
+
+                    if (type.contentEquals("text")) {
                         // Show message to console
-                        message = Client.dis.readUTF();
-                        System.out.println(message);
+                        System.out.println(from + ": " + text);
                     }
 
-                    if (message.contentEquals("#file")) {
-                        String title = Client.dis.readUTF();
-                        Path filePath = Paths.get(title);
+                    if (type.contentEquals("file")) {
 
-                        FileOutputStream fos = new FileOutputStream(String.valueOf(filePath.getFileName()));
-                        BufferedOutputStream bos = new BufferedOutputStream(fos);
+                        if (jsonObject.has("data")) {
+                            // FILE
+                            data = jsonObject.get("data").getAsString();
 
-                        int len = Client.dis.readInt();
-                        byte [] byteArray  = new byte [len];
+                            Path filePath = Paths.get(text);
 
-                        Client.dis.read(byteArray);
-                        bos.write(byteArray);
+                            FileOutputStream fos = new FileOutputStream(String.valueOf(filePath.getFileName()));
+                            BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+                            bos.write(Base64.decodeBase64(data));
+                            bos.flush();
+                        }
 
                         // Show message to console
-                        System.out.println(title);
+                        System.out.println(from + ": " + text);
+                        System.out.println(data);
                     }
 
                 }

@@ -1,19 +1,24 @@
 package Client;
 
+import com.google.gson.JsonObject;
+import org.apache.commons.net.util.Base64;
+
 import java.io.*;
 
 public class CommandHandler {
     String command;
-    public FileInputStream fis = null;
-    public BufferedInputStream bis = null;
-    public FileOutputStream fos = null;
-    public BufferedOutputStream bos = null;
+    JsonObject jsonObject = new JsonObject();
 
     public CommandHandler(String command) {
         this.command = command;
     }
 
-    public void executeCommand() {
+    public void send() throws IOException{
+        Client.dos.writeUTF(jsonObject.toString());
+        Client.dos.flush();
+    }
+
+    public void parseCommand() {
         try {
             System.out.println("Command started.");
             // Split the command
@@ -23,39 +28,44 @@ public class CommandHandler {
             switch (tokens[0]) {
                 /* Exit */
                 case "/exit":
-                    Client.dos.writeUTF(command);
+                    jsonObject.addProperty("command", "exit");
                     Client.close();
                     break;
 
                 /* Whisper */
                 case "/w":
-                    Client.dos.writeUTF(command);
+                    jsonObject.addProperty("command", "whisper");
+                    jsonObject.addProperty("to", tokens[1]);
+                    jsonObject.addProperty("text", tokens[2]);
                     break;
 
                 /* File Transfer */
                 case "/ft":
+                    System.out.println("Transfer started.");
+
                     // For reading Files
-                    fis = new FileInputStream(tokens[2]);
-                    bis = new BufferedInputStream(fis);
+                    FileInputStream fis = new FileInputStream(tokens[2]);
+                    BufferedInputStream bis = new BufferedInputStream(fis);
 
                     int len = fis.available();
                     byte [] byteArray  = new byte [len];
                     bis.read(byteArray, 0, len);
 
-                    Client.dos.writeUTF(command + " " + len);
-                    Client.dos.write(byteArray);
-                    Client.dos.flush();
-                    System.out.println("Transfer ended. " + len);
+                    jsonObject.addProperty("command", "file-transfer");
+                    jsonObject.addProperty("to", tokens[1]);
+                    jsonObject.addProperty("text", tokens[2]);
+                    jsonObject.addProperty("data", Base64.encodeBase64String(byteArray));
+
                     bis.close();
                     fis.close();
+
+                    System.out.println("Transfer ended. " + len);
                     break;
 
                 default:
-                    /*// For writing files
-
-                    */
             }
             //-------------------------------------------
+
         } catch (Exception e) {
             e.printStackTrace();
         }

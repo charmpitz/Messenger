@@ -12,7 +12,8 @@ public class ConsoleListener extends Thread {
 
                 if(!line.isEmpty()) {
                     CommandHandler handler = new CommandHandler(line);
-                    handler.executeCommand();
+                    handler.parseCommand();
+                    handler.send();
                 }
 
                 Thread.sleep(100);

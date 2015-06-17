@@ -1,5 +1,8 @@
 package Server;
 
+import com.google.gson.JsonObject;
+import org.apache.commons.net.util.Base64;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
@@ -16,23 +19,27 @@ public class QueueConsumer extends Thread {
 
     @Override
     public void run () {
-//  /ft 1 /home/ady/Pictures/ARTcast.jpg
         System.out.println("QueueConsumer #" + id + " started.");
         try {
+            JsonObject jsonObject = new JsonObject();
+
             while( Server.clients.get(id).isActive() ) {
                 Message message = Server.clientsMessages.get(id).poll();
 
+                // if we found a new message on the queue
                 if (message != null) {
+                    jsonObject.addProperty("type", message.type);
+                    jsonObject.addProperty("from", message.from);
+                    jsonObject.addProperty("text", message.text);
+
                     if (message.data != null) {
-                        dos.writeUTF("#file");
-                        dos.writeUTF(message.text);
-                        dos.writeInt(message.data.length);
-                        dos.write(message.data);
-                        dos.flush();
-                    } else {
-                        dos.writeUTF("#text");
-                        dos.writeUTF(message.from + ":" + message.text);
+                        // FILE
+                        jsonObject.addProperty("data", message.data);
                     }
+
+                    // send message and clean the buffer
+                    dos.writeUTF(jsonObject.toString());
+                    dos.flush();
                 }
 
                 Thread.sleep(100);

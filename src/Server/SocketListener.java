@@ -7,6 +7,7 @@ public class SocketListener extends Thread {
     int id;
     DataInputStream dis;
     DataOutputStream dos;
+    MessageHandler handler;
 
     public SocketListener(int id, DataInputStream dis, DataOutputStream dos) {
         this.id = id;
@@ -19,9 +20,14 @@ public class SocketListener extends Thread {
         System.out.println("SocketListener #" + id + " started.");
         try {
             while( Server.clients.get(id).isActive() ) {
-                // We parse and execute the command
-                CommandHandler handler = new CommandHandler(id, dis, dos);
-                handler.executeCommand();
+
+                // When we got something new on the stream
+                if (dis.available() != 0) {
+                    // We parse and execute the command
+                    handler = new MessageHandler(id, dis, dos);
+                    handler.readMessage();
+                    handler.executeCommand();
+                }
 
                 Thread.sleep(100);
             }
